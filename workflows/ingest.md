@@ -8,11 +8,22 @@ The user invokes ingest by saying any of: `ingest`, `ingest new sources`, `proce
 
 ### Pending-source detection (when invoked without a filename)
 
-1. List everything in `raw/` (root + subfolders, excluding `assets/`) and `wiki/_inbox/`.
-2. Diff against `log.md`: anything without a matching `ingest: <title>` entry is pending.
-3. Cross-check by looking for missing `wiki/sources/<title>.md` pages (defense-in-depth — files can be renamed, log entries can be wrong).
-4. Present the pending list to the user. Confirm before starting.
-5. Process one source at a time. One ingest = one commit.
+Goal: find every file in `raw/` and `wiki/_inbox/` that hasn't been ingested yet.
+
+The canonical "has been ingested" marker is a corresponding `wiki/sources/<title>.md` page whose `## Raw` link points back to the raw file. Filename stems alone are unreliable — a paper at `raw/pdfs/2604.11687v1.pdf` becomes a source page titled `Please Make it Sound like Human`, so don't try to match titles to filenames. Cross-check via the `## Raw` link.
+
+1. **List candidate raw files.** Every file under `raw/` (root + subfolders, excluding `assets/` and `*.converted.md` derivatives) and `wiki/_inbox/`.
+2. **For each candidate**, grep `wiki/sources/*.md` for the raw filename. A match means already ingested; no match means pending.
+3. **Sanity-check against `log.md`.** Every pending file should also lack a `## [YYYY-MM-DD] ingest | ...` entry that references it. If the log has an entry but `wiki/sources/` doesn't have a matching page (or vice versa), the previous ingest was incomplete — flag this for the user before starting a new one.
+4. **Present the pending list.** If exactly one source is pending, announce it and proceed. If multiple are pending, or any title looks ambiguous, confirm with the user before starting.
+5. Process one source at a time. **One ingest = one commit.**
+
+**Bash one-liner** for steps 1–2 (Linux / macOS / Git Bash):
+```bash
+for f in $(find raw/ wiki/_inbox/ -type f \! -name '.gitkeep' \! -name '*.converted.md' 2>/dev/null); do
+  grep -lF "$(basename "$f")" wiki/sources/*.md >/dev/null 2>&1 || echo "pending: $f"
+done
+```
 
 ### Re-ingestion handling
 
@@ -52,6 +63,8 @@ If the type is ambiguous (e.g. a `.md` with no frontmatter that could be a clipp
    - `docling` (https://github.com/docling-project/docling) — IBM, strong layout preservation
    - `pymupdf` (`fitz`) — fast, programmatic, no OCR
    - `pdftotext` (poppler) — last resort, plain text only
+
+   **Tables are `pdftotext`'s primary failure mode.** If only `pdftotext` is available and the PDF contains structured tables, `pdftotext` will mangle them — numeric values scatter across single-column lines with no row/column structure, making any quantitative claim from the table unreliable. Before proceeding, prefer to install `pymupdf` (`pip install pymupdf` — fast, no system dependencies, no OCR but handles table layout reasonably). If installing isn't possible, **warn the user explicitly** that table content from this PDF may be inaccurate, then proceed with `pdftotext`.
 3. Write converted markdown to `raw/pdfs/<title>.converted.md` so it's diffable, re-readable, and doesn't require re-OCR on subsequent reads.
 4. Record the extractor used in the source summary's frontmatter (`conversion_method: marker`, etc.) so quality issues are traceable.
 5. If the PDF contains figures/tables critical to the content and the extractor missed them: extract images separately into `raw/assets/` and view them inline as part of the summary step.

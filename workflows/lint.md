@@ -111,6 +111,23 @@ grep -rhoE '!\[.*\]\([^)]+\)' wiki/ raw/ | grep -oE '\([^)]+\)' | tr -d '()' | w
 done
 ```
 
+### 9. `log.md` chronological order and date sanity
+
+Log entries are append-only with monotonic non-decreasing dates (newest at bottom). An out-of-order entry is usually either a stray prepend or a year typo — both worth surfacing. Date typos also propagate: when an agent writes `created: 2025-05-14` instead of `2026-05-14` in source frontmatter during an ingest, the same wrong year often ends up on every entity created in that session, so a single flagged log entry usually points to a cluster of bad dates to fix.
+
+```bash
+# Non-monotonic dates — flags any entry whose date precedes the entry before it
+grep -nE '^## \[' log.md | awk -F'[][]' '
+  { if (prev && $2 < prev) print "OUT OF ORDER: " $0 "  (previous: " prev ")"; prev=$2 }
+'
+
+# Year doesn't match current or previous year — usually a typo
+current_year=$(date +%Y)
+grep -nE '^## \[' log.md | grep -vE "\[($current_year|$((current_year-1)))-"
+```
+
+For each flagged entry: confirm the intended date with the user, then check the corresponding `wiki/sources/<title>.md` page and any entities created during that ingest for the same typo (compare `created:` / `updated:` / `ingested:` fields). This is **not** a safe auto-fix — ask before touching any date.
+
 ## Output
 
 Produce a markdown report with sections per check. For each issue: severity (high / medium / low), affected pages (wikilinks), suggested action, and whether you can auto-fix.
@@ -149,7 +166,7 @@ Append to `log.md`:
 
 ```
 ## [YYYY-MM-DD] lint | <one-line summary>
-- checks_run: 8
+- checks_run: 9
 - issues_found: <breakdown by severity>
 - auto_fixed: <count>
 - pending_user_review: <count>
