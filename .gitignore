@@ -1,0 +1,27 @@
+# Obsidian per-user state (not shared)
+.obsidian/workspace*
+.obsidian/cache
+.obsidian/.trash/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp
+
+# Optional: if you want to keep your own ingested content private when working
+# off this template, uncomment the lines below. Leave commented to commit your
+# wiki to git (which is usually what you want).
+# raw/articles/*
+# raw/pdfs/*
+# raw/transcripts/*
+# raw/assets/*
+# wiki/sources/*
+# wiki/entities/*
+# wiki/concepts/*
+# wiki/analyses/*
+# wiki/topics/*
+# !**/.gitkeep
