@@ -16,7 +16,7 @@ This workflow applies when the user asks a question, requests a synthesis, compa
 
 1. **Read `wiki/index.md` first.** It's the catalog organized by page type — fastest way to identify candidate pages.
 2. **Drill into relevant pages.** Read source summaries, entity / concept pages, and existing analyses that touch the question.
-3. **For large wikis (>100 pages):** if `qmd` is installed, shell out for hybrid BM25+vector search. Otherwise the index file is sufficient.
+3. **For large wikis (>100 pages):** if `qmd` is installed (`npm install -g @tobilu/qmd`), shell out for hybrid BM25 + vector + LLM-reranking search. Add the wiki as a collection once (`qmd collection add ./wiki --name <name>` then `qmd embed`), and query with `qmd query "<question>"`. Otherwise the `wiki/index.md` catalog is sufficient. Note: `qmd embed` downloads ~2–3GB of GGUF models on first run.
 4. **Follow wikilinks** to expand context. A good answer often emerges from following 2–3 hops out from the seed pages.
 5. **Note source dates.** If `source_published` is old and the topic is fast-moving, flag the staleness in the answer.
 

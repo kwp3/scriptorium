@@ -145,7 +145,7 @@ Brief reference only; workflow files explain when and how to use each.
 - **Obsidian Web Clipper** — browser extension; writes clipped articles into `wiki/_inbox/`.
 - **Image download hotkey** (`Ctrl+Shift+D` by default) — Obsidian command "Download attachments for current file". Read text first, then view images separately; LLMs can't read markdown-with-inline-images in one pass.
 - **Pluggable PDF extractor** — see `workflows/ingest.md` for the priority list.
-- **qmd** (https://github.com/tobi/qmd) — optional local search engine for the wiki; useful once the wiki grows beyond a few hundred pages.
+- **qmd** (https://github.com/tobi/qmd) — optional local search engine; install with `npm install -g @tobilu/qmd`. Useful once the wiki grows beyond a few hundred pages.
 - **Dataview** — Obsidian plugin; used by `workflows/lint.md` queries and for dynamic indexes inside `wiki/index.md`.
 - **Marp** — Obsidian plugin; used by `workflows/query.md` for slide-deck outputs.
 - **Git** — commit after every state-changing operation; one ingest = one commit.

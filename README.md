@@ -50,6 +50,7 @@ Three layers, by role:
 - **Git** — every state-changing operation is committed.
 - **Optional Obsidian plugins:** Dataview (for queries in `index.md` and lint), Marp (for slide-deck outputs).
 - **Optional PDF extractor:** see `workflows/ingest.md` for the priority list. Any of `marker`, `docling`, `pymupdf`, or `pdftotext` works.
+- **Optional search engine (recommended once the wiki grows past ~100 pages):** [qmd](https://github.com/tobi/qmd) — local hybrid BM25 + vector + LLM-reranking search. Install with `npm install -g @tobilu/qmd`. First `qmd embed` run downloads ~2–3GB of GGUF models (embedding, reranker, query-expansion) into `~/.cache/qmd/`.
 
 ## Getting started
 
@@ -77,4 +78,4 @@ The split between `AGENTS.md` (always loaded) and `workflows/*.md` (loaded on de
 
 - **Andrej Karpathy's `llm-wiki` pattern** — the architectural inspiration. Original gist: https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
 - **Vannevar Bush's Memex** (1945) — the deeper conceptual ancestor. A personal, curated knowledge store where the associative trails between documents are as valuable as the documents themselves. Bush couldn't solve who does the maintenance. LLMs can. See "As We May Think" (https://en.wikipedia.org/wiki/As_We_May_Think).
-- **qmd** by Tobi (https://github.com/tobi/qmd) — optional local search engine for the wiki, referenced in the query workflow.
+- **qmd** by Tobi (https://github.com/tobi/qmd, npm: `@tobilu/qmd`) — optional local hybrid search engine, referenced in the query workflow.
