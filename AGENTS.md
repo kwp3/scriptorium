@@ -32,7 +32,7 @@ The Obsidian vault root is `./wiki/`, NOT the project root. Everything outside `
 │   ├── ingest.md
 │   ├── query.md
 │   └── lint.md
-├── log.md                         # append-only operational log
+├── log.md                         # append-only operational log; newest at bottom
 ├── raw/                           # immutable source files
 │   ├── *.md                       # generic markdown sources at root
 │   ├── articles/                  # web clippings, after migration from wiki/_inbox/
@@ -70,16 +70,23 @@ ingested: YYYY-MM-DD
 source_type: article | pdf | transcript | note | other
 source_url: <url or null>
 source_published: YYYY-MM-DD | unknown
-conversion_method: <tool name, for PDFs/transcripts>
-tags: [...]
+source_published_provenance: <free text>   # optional; include when the date comes from a fallback (e.g. "file mtime")
+conversion_method: <tool name>             # omit entirely when not applicable; include only for PDFs / transcripts that required a conversion tool
+tags:                                       # must include a source-type tag (#article, #pdf, #transcript, or #note) matching source_type above, plus topical tags
+  - <source-type tag>
+  - <topical tags...>
 ```
-Required sections: `## Summary`, `## Key claims`, `## Entities & concepts` (wikilinks to pages this source touched), `## Raw` (relative link back to the file under `raw/`).
+Required sections:
+- `## Summary`
+- `## Key claims` — bullets stating the source's claims. Do NOT self-cite (don't add `[[sources/THIS-PAGE]]`); claims on a source page implicitly derive from that source.
+- `## Entities & concepts` — wikilinks to pages this source touched. For concepts that don't yet meet the 2-source promotion threshold, mention them as **plain text** (not `[[wikilink]]`) so Obsidian doesn't show a broken link.
+- `## Raw` — **standard markdown link** to the file under `raw/`, e.g. `[<filename>](../raw/<subfolder>/<filename>)`. Do NOT use a wikilink with a relative path (`[[../raw/...]]` doesn't resolve in Obsidian) and do NOT wrap the path in backticks (turns it into inline code, not a clickable link).
 
 **Entity** (`wiki/entities/<canonical name>.md`) — people, organizations, products, places.
 ```yaml
 type: entity
 entity_kind: person | org | product | place | other
-aliases: [...]
+aliases: [...]   # different SURFACE FORMS of the same canonical thing (e.g. "V. Bush", "Bush, Vannevar" for "Vannevar Bush). NOT distinct-but-related entities — e.g. "GPT-4" is NOT an alias for "ChatGPT"; they're separate entities (a model vs. a chatbot product).
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 sources: ["[[source-title-1]]", ...]
@@ -92,6 +99,7 @@ Required sections: `## Overview` (1–3 sentences), `## Key facts` (each cited v
 type: concept
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
+aliases: [...]   # optional; alternate names for the same concept (e.g. "LLM Writing Patterns" for "LLM Stylistic Markers"). Used by de-duplication on future ingests — if a new source uses an alias, update the existing page rather than creating a duplicate.
 sources: ["[[source-title-1]]", ...]
 tags: [...]
 ```
@@ -132,11 +140,12 @@ Required sections: `## Overview`, `## Key entities`, `## Key concepts`, `## Open
 - New tags require adding a one-line entry to `wiki/_tags.md` in the same commit.
 - Hierarchical tags are fine when sub-categorization is natural (`#topic/ai/safety`).
 - Tags are for cross-cutting categorization (topic, source-type, importance), NOT for linking specific entities/concepts — use wikilinks for those.
+- **Source-type tags are required on every source page.** Each page in `wiki/sources/` must carry exactly one of `#article`, `#pdf`, `#transcript`, or `#note`, matching its `source_type` frontmatter. These four tags are pre-registered in the template's `wiki/_tags.md`.
 
 ## Indexing & logging
 
 - `wiki/index.md` — content-oriented catalog, organized by page type. Each entry: wikilink + one-line summary. Updated on every state-changing operation.
-- `log.md` — chronological, append-only. Every entry starts with `## [YYYY-MM-DD] <op> | <title>` so `grep "^## \[" log.md | tail -5` works. Operations: `ingest`, `query`, `lint`, `migration`.
+- `log.md` — **append-only, newest entries at the BOTTOM.** New entries are *appended* (added to the end of the file), never prepended. Every entry starts with `## [YYYY-MM-DD] <op> | <title>` so `grep "^## \[" log.md | tail -5` returns the five most recent operations. Operations: `ingest`, `query`, `lint`, `migration`.
 
 ## Tooling references
 

@@ -75,7 +75,9 @@ If the type is ambiguous (e.g. a `.md` with no frontmatter that could be a clipp
 Apply these during the summarize-and-integrate phase of every ingest:
 
 - **Cite every claim.** Any non-trivial assertion in an entity / concept / analysis / topic page gets a `[[sources/<title>]]` wikilink to its source. Unsupported claims get removed or flagged inline.
-- **De-duplicate entities before creating.** Before creating a new entity page, search existing entities for fuzzy matches (`Vannevar Bush` vs `V. Bush` vs `Bush, Vannevar`). If a match exists, update it; add the surface form to the `aliases:` frontmatter field. Establish ONE canonical name and use it everywhere.
+  - **Exception — source pages.** Claims on a source page implicitly derive from that source. Do NOT self-cite (don't add `[[sources/THIS-PAGE]]` to bullets on the source page itself). Citations exist to disambiguate where claims came from on pages that span multiple sources — that's not relevant on a page with exactly one source by definition.
+- **De-duplicate entities and concepts before creating.** Before creating a new entity or concept page, search existing pages for fuzzy matches (`Vannevar Bush` vs `V. Bush` vs `Bush, Vannevar`; `LLM Writing Patterns` vs `LLM Stylistic Markers`). If a match exists, update it; add the surface form to the `aliases:` frontmatter field. Establish ONE canonical name and use it everywhere.
+  - **Aliases are surface forms of the same thing**, not distinct-but-related items. `GPT-4` is NOT an alias for `ChatGPT` — they're separate entities (a model vs. a chatbot product) that happen to be related.
 - **Surface contradictions explicitly.** When a new source contradicts an existing claim on an entity / concept page, add an Obsidian callout:
   ```markdown
   > [!conflict] Sources disagree
@@ -89,6 +91,8 @@ Apply these during the summarize-and-integrate phase of every ingest:
   - A topic / theme overview gets created once **3+ concepts** cluster around it.
 - **No new info without a source.** Never fabricate connections or claims. Every assertion in `wiki/` traces back to a file under `raw/`.
 - **Prefer updates over creation.** If an entity / concept page already exists, update it. Only create when no match exists.
+- **Deferred concepts are PLAIN TEXT, not wikilinks.** A concept that hasn't met the 2-source promotion threshold gets mentioned as plain text in the source's `## Entities & concepts` section and anywhere else in prose — e.g. `... see Diffusion Model Prompting for more (1 source so far, page deferred)`. Do NOT write `[[concepts/Diffusion Model Prompting]]` while the page doesn't exist; Obsidian will show it as a broken link and lint will flag it. Promote to wikilink only when you create the page.
+- **Cross-link new and updated concept pages.** When you create or update a `wiki/concepts/<name>.md` page, add `[[concepts/<name>]]` to the `## Related` section of every entity referenced on that concept page. Backlinks are implicit in Obsidian's graph, but a visible Related section helps readers and lint.
 
 ## Common end-of-ingest checklist
 
@@ -98,7 +102,7 @@ For every source, in order:
 2. For each entity / concept / topic mentioned: update the existing page (preferred) or create a new one. Apply the synthesis quality heuristics.
 3. Update `wiki/index.md` with new pages and updated one-liners.
 4. If new tags were introduced: add them to `wiki/_tags.md` with a one-line gloss.
-5. Append an entry to `log.md`:
+5. **Append (do not prepend)** an entry to the END of `log.md`. The log is sorted oldest-at-top, newest-at-bottom, so `tail -5` returns the five most recent operations. New entries go at the bottom of the file, after every existing entry. Format:
    ```
    ## [YYYY-MM-DD] ingest | <title>
    - source_type: <type>
