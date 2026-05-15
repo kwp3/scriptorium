@@ -54,6 +54,55 @@ If the type is ambiguous (e.g. a `.md` with no frontmatter that could be a clipp
 3. If the article references images: invoke Obsidian's `Download attachments for current file` (default `Ctrl+Shift+D`) so images land in `raw/assets/`. Read the article text first, then optionally view downloaded images for context.
 4. Proceed to common end-of-ingest steps below.
 
+> [!warning] Frontmatter pitfall — do not mimic the Web Clipper's frontmatter on the source page
+> Web Clipper writes its own YAML frontmatter into the clipped `.md` (typically `title:`, `source:` or `url:`, `author:` / `authors:`, `published:` or `date:`, sometimes `tags:`). That frontmatter belongs to the **raw file**, not your source-summary page. Under context pressure (long articles, multiple compactions), the easy failure mode is to copy the clipper's frontmatter onto `wiki/sources/<title>.md` and then add a `## Summary` underneath. **Don't.** The source-summary schema in `AGENTS.md` is strict — rewrite the frontmatter, do not preserve the clipper's.
+>
+> Mapping from typical Web Clipper fields → source-summary schema:
+>
+> | Web Clipper field | Source-summary field | Notes |
+> | --- | --- | --- |
+> | `title:` | (none — page filename is the title) | drop |
+> | `source:` or `url:` | `source_url:` | rename |
+> | `author:` / `authors:` | (none — capture authorship in the body if material) | drop from frontmatter |
+> | `published:` or `date:` | `source_published:` | rename; if absent, fall back to file mtime and add `source_published_provenance: file mtime` |
+> | `created:` (clip timestamp) | `ingested:` | the clip date IS the ingest date if you process it immediately; otherwise use today |
+> | (always required) | `type: source` | always add |
+> | (always required) | `created:` | today's date |
+> | (always required) | `source_type:` | `article` for clipped content |
+> | (always required) | `tags:` | must include `article` plus topical tags |
+>
+> Before-and-after example:
+>
+> ```yaml
+> # ❌ BEFORE — Web Clipper frontmatter pasted into wiki/sources/<title>.md
+> ---
+> title: Wikipedia: Signs of AI Writing
+> source: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing
+> author: WikiProject AI Cleanup
+> date: 2025-11-20
+> created: 2026-05-14
+> tags: [wikipedia, ai-writing]
+> ---
+> ```
+>
+> ```yaml
+> # ✅ AFTER — rewritten to source-summary schema
+> ---
+> type: source
+> created: 2026-05-14
+> ingested: 2026-05-14
+> source_type: article
+> source_url: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing
+> source_published: 2025-11-20
+> tags:
+>   - article
+>   - wikipedia
+>   - ai-writing-detection
+> ---
+> ```
+>
+> If you find yourself preserving the clipper's frontmatter shape unchanged, stop and rewrite. Lint check 12 (frontmatter schema validation) will catch this after the fact, but catching it during the ingest costs ~30 seconds and a follow-up commit.
+
 ### b) PDFs (seamless workflow — the priority pain point)
 
 1. PDF lands in `raw/pdfs/<title>.pdf` (route from `raw/` root if it landed loose).

@@ -141,6 +141,7 @@ Required sections: `## Overview`, `## Key entities`, `## Key concepts`, `## Open
 - Hierarchical tags are fine when sub-categorization is natural (`#topic/ai/safety`).
 - Tags are for cross-cutting categorization (topic, source-type, importance), NOT for linking specific entities/concepts — use wikilinks for those.
 - **Source-type tags are required on every source page.** Each page in `wiki/sources/` must carry exactly one of `#article`, `#pdf`, `#transcript`, or `#note`, matching its `source_type` frontmatter. These four tags are pre-registered in the template's `wiki/_tags.md`.
+- **Format note for agents comparing the two.** In page frontmatter, tags are **bare strings** under the `tags:` key (e.g. `- article`). In `wiki/_tags.md`, the same tags are listed **backtick-wrapped** (e.g. `` `article` ``) purely for display readability — the backticks are not part of the tag. When comparing the frontmatter set against the registered set (e.g. in lint check 6), strip backticks from `_tags.md` before comparing.
 
 ## Indexing & logging
 
