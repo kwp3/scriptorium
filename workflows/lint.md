@@ -12,6 +12,22 @@ A lint pass produces a markdown report of issues found and (where safe) auto-fix
 
 Run each check below. For each issue found, record: what it is, which pages it affects, suggested action.
 
+### Heuristic rules to apply alongside the checks below
+
+Several of the checks below have a **heuristic rule that the script cannot express**. You MUST apply these rules during the corresponding check — do not rely on the script output alone. Read each item, confirm you understand it, and apply it when you reach the relevant check.
+
+**Check 2 — classify source pages as "integration incomplete," not "orphan":**
+When the orphan-detection script outputs pages under `wiki/sources/`, do NOT flag them as orphaned. Source summary pages legitimately have few inbound links until their content is cross-referenced into entities, concepts, and analyses. Instead, flag each as "integration incomplete — content not yet woven into the wiki." Only pages in `entities/`, `concepts/`, `analyses/`, and `topics/` with zero inbound links are genuine orphans.
+
+**Check 3 — classify `[[concepts/X]]` links to nonexistent pages as deferred-concept violations:**
+When the broken-wikilink script outputs `BROKEN: [[concepts/X]]` for a concept page that does not exist under `wiki/concepts/`, do NOT recommend creating the page. Per the synthesis heuristic in `workflows/ingest.md`, concepts that haven't met the 2-source promotion threshold should appear as **plain text** in source pages, not as wikilinks. A `[[concepts/X]]` link to a missing page means the ingest agent incorrectly promoted a deferred concept to a wikilink. Flag it as "deferred-concept link leak" and recommend converting to plain text.
+
+**Check 7 — surface topic candidates manually:**
+Beyond concept-level promotion, scan for groups of 3+ existing concept pages that share tags and sources — those are candidates for topic-overview pages (`wiki/topics/<theme>.md`). The promotion script catches concept-level candidates only and cannot detect topic-level clusters. When reviewing the script's PROMOTE output alongside the existing concept pages in `wiki/concepts/`, also surface any cluster of 3+ concepts sharing 2+ tags and 2+ sources as a topic candidate, with a proposed theme name for the user to confirm.
+
+**Check 9 — cross-reference flagged log dates into source and entity pages:**
+When the chronological-order script flags a date anomaly in `log.md` (out-of-order entry or wrong-year entry), do NOT stop at the log. Open the `wiki/sources/<title>.md` page named in that log entry and inspect its `created:`, `ingested:`, and `source_published:` fields for the same typo. Then check all entity and concept pages whose `created:` or `updated:` date matches the wrong date — they were likely created in the same ingest session and carry the same error. A single wrong-year log entry usually indicates a cluster of bad dates across multiple pages.
+
 ### 1. `wiki/_inbox/` is non-empty
 
 The inbox should be drained on every ingest. If files remain, list them and ask whether to ingest, delete, or leave.
@@ -187,9 +203,59 @@ WHERE length(rows) >= 2 AND !contains(link.file.path, "wiki/concepts")
 ```
 ````
 
-**CLI fallback** — the harder case is plain-text mentions (deferred concepts), since those aren't wikilinks. The reliable heuristic is: scan every source page's `## Entities & concepts` section for plain-text concept names, count occurrences across sources, flag any that appear in 2+ sources but have no `wiki/concepts/<name>.md` page. This is best done by a human reviewer reading the report — surface candidates rather than auto-promoting.
+**CLI fallback** — scans every source page's `## Entities & concepts` section for plain-text concept names (bullets without `[[]]`), counts occurrences across sources, and flags any that appear in 2+ sources but have no `wiki/concepts/<name>.md` page. Surface candidates in the report — do not auto-promote.
 
-Topics: clusters of 3+ related concepts without an overview page. Harder to detect automatically — surface concept pages with shared tags and many shared sources as candidates.
+```bash
+python3 - <<'PY'
+import os, re, glob
+
+concept_refs = {}
+
+for path in glob.glob("wiki/sources/*.md"):
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    m = re.search(r'(?s)## Entities & concepts\n(.*?)(?=\n## |\Z)', text)
+    if not m:
+        continue
+    section = m.group(1)
+
+    for line in section.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith('-'):
+            continue
+        content = stripped.lstrip('-').strip()
+        if not content or content.startswith('[['):
+            continue
+        # Strip bold/italic markers
+        clean = re.sub(r'\*+', '', content).strip()
+        # Concept name is the part before " — " (em-dash separator) or end of line
+        name = clean.split(' — ')[0].split(' -- ')[0].strip()
+        if name and len(name) > 2 and not os.path.exists(f"wiki/entities/{name}.md"):
+            concept_refs.setdefault(name, set()).add(os.path.basename(path))
+
+print("=== Promotion candidates (plain-text mentions in 2+ sources) ===")
+promoted = False
+for name in sorted(concept_refs):
+    refs = concept_refs[name]
+    if len(refs) >= 2 and not os.path.exists(f"wiki/concepts/{name}.md"):
+        promoted = True
+        print(f"PROMOTE: \"{name}\" — mentioned in {len(refs)} sources: {sorted(refs)}")
+if not promoted:
+    print("(none)")
+
+print("\n=== Deferred concepts (1 source — below threshold) ===")
+deferred = False
+for name in sorted(concept_refs):
+    refs = concept_refs[name]
+    if len(refs) == 1 and not os.path.exists(f"wiki/concepts/{name}.md"):
+        deferred = True
+        print(f"  DEFERRED: \"{name}\" — 1 source")
+if not deferred:
+    print("(none)")
+PY
+```
+
+Topic-cluster detection (groups of 3+ concepts sharing tags and sources) is a manual step — see the heuristic checklist at the top of this file.
 
 ### 8. Image references that no longer resolve
 
@@ -401,11 +467,82 @@ PY
 
 For each issue: surface in the report, ask the user before rewriting frontmatter (the agent may have intentionally added fields beyond the schema — those are allowed, but missing required fields and bad enum values almost always indicate ingest-time error). **Not a safe auto-fix.**
 
-A separate, more heuristic spot-check: on every `entity_kind: product` page that represents a chatbot or model family, scan `aliases:` for entries that look like model versions (`<entity>-<digit>`, `GPT-4`, `<entity> Pro`, `<entity> Sonnet`, etc.). These are usually distinct entities, not surface forms — the spec calls this out explicitly in `AGENTS.md`. Surface for user review.
+### 12b. Alias semantic scan (entity_kind: product pages)
+
+On every `entity_kind: product` page, check whether any alias names what appears to be a distinct model or product rather than a surface form of the same entity. Per `AGENTS.md`, aliases must be different surface forms of the **same canonical thing** (e.g. "V. Bush" for "Vannevar Bush"); GPT-4 is NOT an alias for ChatGPT because they are separate entities (a model vs. a product). The script below casts a wide net — false positives are expected. Output is `REVIEW`, not `VIOLATION` — the operator decides whether each flagged alias is a legitimate surface form or should be split into its own entity page.
+
+```bash
+python3 - <<'PY'
+import os, re, glob
+
+for path in glob.glob("wiki/entities/*.md"):
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    m = re.match(r'(?s)^---\n(.*?)\n---', text)
+    if not m:
+        continue
+    fm = m.group(1)
+    kind = re.search(r'(?m)^entity_kind:\s*(\S+)', fm)
+    if not kind or kind.group(1).strip().strip("'\"") != "product":
+        continue
+
+    base = os.path.splitext(os.path.basename(path))[0]
+    aliases = []
+    block = re.search(r'(?ms)^aliases:\s*\n((?:[ \t]+-\s*\S.*\n?)+)', fm)
+    if block:
+        for line in block.group(1).splitlines():
+            a = line.strip().lstrip('-').strip().strip('"').strip("'")
+            if a: aliases.append(a)
+    inline = re.search(r'(?m)^aliases:\s*\[(.+)\]', fm)
+    if inline:
+        for a in inline.group(1).split(','):
+            a = a.strip().strip('"').strip("'")
+            if a: aliases.append(a)
+
+    if not aliases:
+        continue
+
+    for alias in aliases:
+        flag = False
+        reasons = []
+        # Pattern: contains digits (version numbers like GPT-4, GPT-5.1)
+        if re.search(r'\d', alias):
+            flag = True
+            reasons.append("contains digits (possible version number)")
+        # Pattern: hyphenated with qualifier (e.g. bart-base, bart-large, falcon-7b)
+        if re.search(r'-[a-z]+$', alias, re.IGNORECASE) and not alias.lower().startswith(base.lower()):
+            flag = True
+            reasons.append("hyphenated qualifier suffix")
+        # Pattern: slash-separated namespace (e.g. facebook/bart-base)
+        if '/' in alias:
+            flag = True
+            reasons.append("slash-separated (namespace/variant)")
+        # Pattern: common product tier keywords
+        if re.search(r'\b(Pro|Sonnet|Mini|Nano|Lite|Turbo|Ultra|Max|Enterprise)\b', alias, re.IGNORECASE):
+            flag = True
+            reasons.append("contains product-tier keyword")
+        # Pattern: entity name + distinct suffix (e.g. "ChatGPT Plus" vs "ChatGPT")
+        # Only flag when the alias is NOT the page name itself and extends it
+        if alias.lower() != base.lower() and alias.lower().startswith(base.lower()):
+            remainder = alias[len(base):].strip().lstrip('-').strip()
+            if remainder and not re.match(r'^(base|large|small|xl|xxl)$', remainder.lower()):
+                # base/large/small/xl are common model size qualifiers — don't double-flag
+                # if already caught by digit or hyphen check
+                if not flag:
+                    flag = True
+                    reasons.append(f'extends entity name with "{remainder}"')
+
+        if flag:
+            print(f'REVIEW: {path} — alias "{alias}" ({", ".join(reasons)})')
+            print(f'  Does "{alias}" name a distinct entity or a surface form of {base}?')
+PY
+```
 
 ## Output
 
 Produce a markdown report with sections per check. For each issue: severity (high / medium / low), affected pages (wikilinks), suggested action, and whether you can auto-fix.
+
+Include `REVIEW:` items from the alias semantic scan (check 12b) as a dedicated subsection in the report. Each REVIEW item is informational unless the operator confirms a violation — do not auto-fix.
 
 Format:
 
