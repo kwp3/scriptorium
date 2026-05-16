@@ -401,7 +401,8 @@ REQUIRED_FIELDS = {
     "topic":    ["type", "created", "updated", "entities", "concepts", "tags"],
 }
 REQUIRED_SECTIONS = {
-    "source":   ["## Summary", "## Key claims", "## Entities & concepts", "## Raw"],
+    "source":   ["## Summary", "## Key claims", "## Entities & concepts",
+                 "### Entities", "### Concepts", "## Raw"],
     "entity":   ["## Overview", "## Key facts", "## Related"],
     "concept":  ["## Definition", "## Origins / proponents", "## Examples", "## Critiques or contradictions"],
     "analysis": ["## Question", "## Findings", "## Caveats / gaps"],
