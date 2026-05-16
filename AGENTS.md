@@ -88,7 +88,7 @@ Required sections:
 ```yaml
 type: entity
 entity_kind: person | org | product | place | other
-aliases: [...]   # different SURFACE FORMS of the same canonical thing (e.g. "V. Bush", "Bush, Vannevar" for "Vannevar Bush). NOT distinct-but-related entities — e.g. "GPT-4" is NOT an alias for "ChatGPT"; they're separate entities (a model vs. a chatbot product).
+aliases: [...]   # different SURFACE FORMS of the same canonical thing (e.g. "V. Bush", "Bush, Vannevar" for "Vannevar Bush"). NOT distinct-but-related entities — e.g. "GPT-4" is NOT an alias for "ChatGPT"; they're separate entities (a model vs. a chatbot product). Do NOT include the canonical name itself (the page filename) as an alias — it is redundant.
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 sources: ["[[source-title-1]]", ...]
@@ -101,7 +101,7 @@ Required sections: `## Overview` (1–3 sentences), `## Key facts` (each cited v
 type: concept
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
-aliases: [...]   # optional; alternate names for the same concept (e.g. "LLM Writing Patterns" for "LLM Stylistic Markers"). Used by de-duplication on future ingests — if a new source uses an alias, update the existing page rather than creating a duplicate.
+aliases: [...]   # optional; alternate names for the same concept (e.g. "LLM Writing Patterns" for "LLM Stylistic Markers"). Used by de-duplication on future ingests — if a new source uses an alias, update the existing page rather than creating a duplicate. Do NOT include the canonical name itself as an alias.
 sources: ["[[source-title-1]]", ...]
 tags: [...]
 ```
@@ -141,6 +141,7 @@ Required sections: `## Overview`, `## Key entities`, `## Key concepts`, `## Open
 - Page filenames mirror display titles (Obsidian-style).
 - Backlinks are implicit via Obsidian; do not maintain a manual "linked from" list.
 - Cite sources via `[[sources/<title>]]` wherever a non-trivial claim appears.
+- When naming an entity that has a wiki page in the body prose of a concept, analysis, or topic page, use `[[entities/<name>]]` — never `**bold**` or plain text. Bold without a wikilink is invisible to the link graph.
 
 **Tags:**
 - The controlled vocabulary lives in `wiki/_tags.md` — a flat list with a one-line gloss per tag.
@@ -154,7 +155,7 @@ Required sections: `## Overview`, `## Key entities`, `## Key concepts`, `## Open
 ## Indexing & logging
 
 - `wiki/index.md` — content-oriented catalog, organized by page type. Each entry: wikilink + one-line summary. Updated on every state-changing operation.
-- `log.md` — **append-only, newest entries at the BOTTOM.** New entries are *appended* (added to the end of the file), never prepended. Every entry starts with `## [YYYY-MM-DD] <op> | <title>` so `grep "^## \[" log.md | tail -5` returns the five most recent operations. Operations: `ingest`, `query`, `lint`, `migration`.
+- `log.md` — **append-only, newest entries at the BOTTOM.** New entries are *appended* (added to the end of the file), never prepended. Always insert by placing content after the final line of the file — do NOT use search-and-replace to position entries within the file, which risks inserting before existing content. Every entry starts with `## [YYYY-MM-DD] <op> | <title>` so `grep "^## \[" log.md | tail -5` returns the five most recent operations. Operations: `ingest`, `query`, `lint`, `migration`.
 
 ## Tooling references
 

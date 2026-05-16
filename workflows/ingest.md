@@ -145,7 +145,7 @@ Apply these during the summarize-and-integrate phase of every ingest:
   > [!conflict] Sources disagree
   > [[sources/A]] says X. [[sources/B]] says Y. Reconciliation: <your synthesis or "unresolved">.
   ```
-  Never silently overwrite.
+  Never silently overwrite. Use `[!conflict]` **only** when two sources make contradictory positive claims about the same thing. Do NOT use it for: absence of mention (source A not discussing something source B mentions), different levels of detail, or complementary perspectives on the same topic.
 - **Date the sources.** Always populate `source_published` in source-summary frontmatter when known. This is what lint uses to detect stale claims.
 - **Promotion thresholds.**
   - A passing mention stays inline inside its source summary.
