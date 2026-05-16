@@ -79,7 +79,9 @@ tags:                                       # must include a source-type tag (#a
 Required sections:
 - `## Summary`
 - `## Key claims` — bullets stating the source's claims. Do NOT self-cite (don't add `[[sources/THIS-PAGE]]`); claims on a source page implicitly derive from that source.
-- `## Entities & concepts` — wikilinks to pages this source touched. For concepts that don't yet meet the 2-source promotion threshold, mention them as **plain text** (not `[[wikilink]]`) so Obsidian doesn't show a broken link.
+- `## Entities & concepts` — split into two required sub-sections:
+  - `### Entities` — every person, org, product, and place the source meaningfully describes. Entities with pages get wikilinks; entities without pages yet are plain text. Each line requires a `(entity_kind)` annotation in parentheses — e.g. `**[[WikiProject AI Cleanup]]** (org)` or `**GPTZero** (product)`. Write `*(none)*` only when the source genuinely contains no named persons, orgs, products, or places with capturable facts.
+  - `### Concepts` — promoted concepts as wikilinks, deferred concepts as plain text with source count. Promoted: `[[Concept Name]]` (page exists). Deferred: `Concept name (N source — deferred)`.
 - `## Raw` — **standard markdown link** to the file under `raw/`, e.g. `[<filename>](../../raw/<subfolder>/<filename>)`. Source pages live at `wiki/sources/`, so the relative path needs **two** `../` segments to reach the project root before descending into `raw/` — `../raw/` would resolve inside `wiki/` and 404. Do NOT use a wikilink with a relative path (`[[../../raw/...]]` doesn't resolve in Obsidian) and do NOT wrap the path in backticks (turns it into inline code, not a clickable link).
 
 **Entity** (`wiki/entities/<canonical name>.md`) — people, organizations, products, places.
