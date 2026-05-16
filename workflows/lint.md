@@ -605,6 +605,28 @@ PY
 
 For each flagged page: open the source and inspect `## Key claims` for named persons, orgs, and products that should have entity entries. Surface candidates for user confirmation before creating pages. **Not a safe auto-fix.**
 
+### 14. Entity_kind annotation completeness
+
+Every non-empty line in a `### Entities` sub-section must carry a `(person|org|product|place|other)` annotation. A missing annotation signals the inventory step was completed but the classification was not recorded.
+
+```bash
+python3 - <<'PY'
+import re, glob
+for path in glob.glob("wiki/sources/*.md"):
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    m = re.search(r'(?s)### Entities\n(.*?)(?=\n### |\n## |\Z)', text)
+    if not m: continue
+    for line in m.group(1).splitlines():
+        stripped = line.strip()
+        if not stripped or stripped == "*(none)*": continue
+        if not re.search(r'\((person|org|product|place|other)\)', stripped):
+            print(f"MISSING KIND ANNOTATION: {path} — {stripped[:60]}")
+PY
+```
+
+For each flagged line: add the missing `(entity_kind)` annotation. **Safe auto-fix** when the entity_kind is unambiguous from context (e.g. a named person, a well-known company); ask the user if unclear.
+
 ## Output
 
 Produce a markdown report with sections per check. For each issue: severity (high / medium / low), affected pages (wikilinks), suggested action, and whether you can auto-fix.
@@ -645,7 +667,7 @@ Append to `log.md`:
 
 ```
 ## [YYYY-MM-DD] lint | <one-line summary>
-- checks_run: 13
+- checks_run: 14
 - issues_found: <breakdown by severity>
 - auto_fixed: <count>
 - pending_user_review: <count>
