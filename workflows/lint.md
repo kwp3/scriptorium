@@ -571,6 +571,40 @@ PY
 
 For each flagged smell: open the source pages and inspect their `## Entities & concepts` sections. Where deferred mentions describe real entities with multiple captureable facts, recommend creating entity pages. **Not a safe auto-fix** — surface the candidates with their source-context for the user to confirm before creating pages.
 
+Also check source pages individually for empty `### Entities` blocks that contradict the source content:
+
+```bash
+python3 - <<'PY'
+import re, glob
+
+for path in glob.glob("wiki/sources/*.md"):
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+
+    # Is ### Entities empty or *(none)*?
+    entities_m = re.search(r'(?s)### Entities\n(.*?)(?=\n### |\n## |\Z)', text)
+    if not entities_m:
+        continue
+    entities_body = entities_m.group(1).strip()
+    if entities_body and entities_body != "*(none)*":
+        continue  # has real entries — skip
+
+    # Are there capitalized multi-word phrases in ## Key claims?
+    claims_m = re.search(r'(?s)## Key claims\n(.*?)(?=\n## |\Z)', text)
+    if not claims_m:
+        continue
+    claims = claims_m.group(1)
+    proper_nouns = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+', claims)
+    unique = sorted(set(proper_nouns))
+    if len(unique) >= 2:
+        print(f"SUSPICIOUS EMPTY ENTITIES: {path}")
+        print(f"  Key claims mention {len(unique)} capitalized phrases but ### Entities is empty.")
+        print(f"  Sample: {', '.join(unique[:3])}")
+PY
+```
+
+For each flagged page: open the source and inspect `## Key claims` for named persons, orgs, and products that should have entity entries. Surface candidates for user confirmation before creating pages. **Not a safe auto-fix.**
+
 ## Output
 
 Produce a markdown report with sections per check. For each issue: severity (high / medium / low), affected pages (wikilinks), suggested action, and whether you can auto-fix.
