@@ -157,6 +157,37 @@ Apply these during the summarize-and-integrate phase of every ingest:
 - **Deferred concepts are PLAIN TEXT, not wikilinks.** A concept that hasn't met the 2-source promotion threshold gets mentioned as plain text in the source's `## Entities & concepts` section and anywhere else in prose — e.g. `... see Diffusion Model Prompting for more (1 source so far, page deferred)`. Do NOT write `[[concepts/Diffusion Model Prompting]]` while the page doesn't exist; Obsidian will show it as a broken link and lint will flag it. Promote to wikilink only when you create the page.
 - **Cross-link new and updated concept pages.** When you create or update a `wiki/concepts/<name>.md` page, add `[[concepts/<name>]]` to the `## Related` section of every entity referenced on that concept page. Backlinks are implicit in Obsidian's graph, but a visible Related section helps readers and lint.
 
+## Entity & concept inventory (mandatory pre-step)
+
+Before writing any pages, produce an entity & concept inventory in the chat. This is your synthesis plan — classify everything before creating anything. Do not skip this step under time pressure.
+
+```
+=== Entity & concept inventory: [source title] ===
+
+Persons:        [names or "(none)"]
+Orgs:           [names or "(none)"]
+Products/tools: [names or "(none)"]
+Places:         [names or "(none)"]
+
+→ Entity pages to create: [list with entity_kind in parens, e.g. "BART (product)"]
+→ Entity pages to update: [list or "(none)"]
+→ Passing mentions only (no page): [list or "(none)"]
+
+Concept candidates:
+  [concept name] — [N] source(s) [(deferred | promote)]
+
+→ Concepts to promote: [list or "(none)"]
+→ Concepts to defer:   [list or "(none)"]
+```
+
+Rules:
+- A named thing goes in the entity list if it has ≥2 capturable facts (what it does, who made it, a key finding about it). A single name-drop with no attached facts stays off the list.
+- Every item in the entity list gets a page — no source-count threshold applies to entities.
+- Concept candidates are held to the 2-source threshold, independent of the entity list.
+- If unsure whether something is an entity or a concept: does it have a proper name and a persistent real-world existence? If yes, it's an entity.
+
+The inventory is not committed to disk. Its output is the `### Entities` / `### Concepts` sub-sections of the source page (which are saved and lintable).
+
 ## Common end-of-ingest checklist
 
 For every source, in order:
