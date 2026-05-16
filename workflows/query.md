@@ -56,15 +56,22 @@ A `.canvas` file with nodes and edges, suitable for Obsidian's Canvas view. Use 
 
 ## File-back pattern (important)
 
-When the answer represents reusable synthesis — a comparison, an analysis, a connection worth keeping — **offer to file it back** as a new analysis page:
+When the answer represents reusable synthesis, **offer to file it back** as a new analysis page:
 
 > "This synthesis seems reusable. Want me to file it as `wiki/analyses/<title>.md` so future queries can build on it?"
 
-Do NOT auto-file. The user decides what's keepable.
+Do NOT auto-file. The user decides what's keepable. But the offer is **not** optional — agents tend to skip it on long prose answers, which is exactly when filing matters most. **Offer to file if any of these are true:**
+
+- The answer is a **comparison** across 2+ sources (e.g. "compare X and Y", "how do these sources differ on Z").
+- The prose exceeds **~6 substantive paragraphs** or weaves together 3+ sources of synthesis.
+- The output is a **structured artifact** — slide deck, JSON Canvas, chart, table that integrates multiple sources.
+- The user asks a question whose answer composes facts from sources in a way the wiki's existing pages don't already capture (i.e. it's genuinely new synthesis, not a lookup).
+
+Pure lookups ("what does my wiki say about X?"), gap reports ("we have no source on Y"), and one-paragraph clarifications don't need the offer. Everything else does. When in doubt, offer — the cost of asking is trivial; the cost of losing a substantive synthesis is permanent.
 
 If filed:
 
-1. Write to `wiki/analyses/<title>.md` using the analysis schema from `AGENTS.md` (`type: analysis`, `question:`, `sources: [...]`).
+1. Write to `wiki/analyses/<title>.md` using the analysis schema from `AGENTS.md` (`type: analysis`, `question:`, `sources: [...]`). For mixed-format outputs (Marp decks, Canvas), follow the "Mixed-format analyses" subsection in `AGENTS.md`.
 2. Add a one-line entry to `wiki/index.md` under the Analyses section.
 3. If new tags were used, add them to `wiki/_tags.md`.
 4. Append a `log.md` entry:
@@ -76,10 +83,18 @@ If filed:
    ```
 5. Commit: `git commit -m "query: <title>"`.
 
-If not filed, append a lighter log entry without committing:
+## Logging unfiled queries (mandatory)
+
+**Every query gets a log entry, regardless of file-back outcome.** Agents routinely skip this step for unfiled queries, leaving the wiki with no trail of what has been explored — which means recurring questions get re-derived from scratch and the user can't see at a glance what they've already asked. Don't skip it.
+
+If the user declined to file (or the answer didn't warrant an offer), append a lighter entry **without committing**:
+
 ```
-## [YYYY-MM-DD] query | <short description>
+## [YYYY-MM-DD] query | <short description of the question>
 - filed: no
+- sources: <N referenced>
 ```
 
-This keeps a trail of what was asked even when no page was produced — useful for spotting recurring questions that should be turned into evergreen analyses.
+No commit on unfiled queries — the log entry is the only state change, and it'll go in with the next ingest or lint commit. For multi-question sessions, log each question as a separate entry; do NOT collapse them into one session-level entry, since each question is independently searchable for future "have we explored this?" checks.
+
+This trail is what lets future agents (and the user) see what has already been explored, spot recurring questions that should be turned into evergreen analyses, and avoid duplicate work.

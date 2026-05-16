@@ -149,6 +149,7 @@ Apply these during the summarize-and-integrate phase of every ingest:
 - **Date the sources.** Always populate `source_published` in source-summary frontmatter when known. This is what lint uses to detect stale claims.
 - **Promotion thresholds.**
   - A passing mention stays inline inside its source summary.
+  - **Entities have no source-count threshold.** Create an entity page (person, org, product, place) the first time a source meaningfully describes it. The "passing mention stays inline" rule still applies to truly incidental references — a single name-drop with no facts attached, e.g. "as IBM noted" used purely as throat-clearing — but anything with two or more facts worth capturing gets a page on first appearance. This explicitly differs from concepts: do NOT apply the 2-source threshold to entities. A wiki with multiple sources and zero entity pages is almost always wrong — the agent has misread this rule and deferred entities that should have been created. If unsure between "passing mention" and "first substantive mention," err on the side of creating the page; thinly populated entity pages are cheap and lint will flag the truly empty ones.
   - A concept gets its own `wiki/concepts/` page once **2+ sources** reference it.
   - A topic / theme overview gets created once **3+ concepts** cluster around it.
 - **No new info without a source.** Never fabricate connections or claims. Every assertion in `wiki/` traces back to a file under `raw/`.

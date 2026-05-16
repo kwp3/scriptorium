@@ -115,6 +115,12 @@ tags: [...]
 ```
 Required sections: `## Question`, `## Findings`, `## Caveats / gaps`.
 
+**Mixed-format analyses.** Some analyses are produced in formats that have their own frontmatter or no frontmatter at all (Marp slide decks need `marp: true`/`theme:`/`paginate:`; Obsidian Canvas files (`.canvas`) are JSON and cannot carry YAML at all). These are still analyses, and the schema still applies — adapt as follows:
+
+- **Marp slide decks** (`wiki/analyses/<title>.md` with Marp directives): keep the Marp keys AND include the analysis frontmatter alongside them in the same block. Place the required sections (`## Question`, `## Findings`, `## Caveats / gaps`) as a brief preface before the first `---` slide separator, then begin the deck. The preface anchors the deck inside the wiki's citation graph; the slides are the user-facing form.
+- **Canvas analyses** (`wiki/analyses/<title>.canvas`): exempt from YAML frontmatter (the file is JSON). Instead, the catalog entry in `wiki/index.md` must include a fuller one-line summary that captures what would have been the `question:` field, and the canvas itself must include `file`-type nodes pointing to the sources it draws from (Obsidian renders these as live embeds and they serve as the citation graph).
+- **Any other non-markdown output** filed under `analyses/` should follow the same principle: preserve as much of the analysis schema as the format allows, and capture the missing metadata in `wiki/index.md`.
+
 **Topic / theme overview** (`wiki/topics/<theme>.md`) — high-level rollups.
 ```yaml
 type: topic

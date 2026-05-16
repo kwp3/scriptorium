@@ -538,6 +538,38 @@ for path in glob.glob("wiki/entities/*.md"):
 PY
 ```
 
+### 13. Suspiciously empty page-type folders
+
+A wiki with multiple ingested sources but **zero entity pages** is almost always a misapplied promotion threshold — the agent has read the 2-source rule for concepts and incorrectly applied it to entities too. Per `workflows/ingest.md`, entities have no source-count threshold; they're created on first substantive mention. The same smell applies to other page-type folders that should be non-empty given the source count.
+
+```bash
+python3 - <<'PY'
+import os, glob
+
+sources = len(glob.glob("wiki/sources/*.md"))
+entities = len(glob.glob("wiki/entities/*.md"))
+concepts = len(glob.glob("wiki/concepts/*.md"))
+
+if sources >= 2 and entities == 0:
+    print(f"SUSPICIOUS: {sources} source pages but 0 entity pages.")
+    print("  Likely cause: agent applied the 2-source concept threshold to entities.")
+    print("  Per workflows/ingest.md, entities have NO source-count threshold —")
+    print("  they're created on first substantive mention.")
+    print("  Review each source's `## Entities & concepts` section for deferred")
+    print("  entities (people, orgs, products, places) that should have pages.")
+
+# Soft signal: many sources but few concepts can indicate under-synthesis,
+# though this is less reliable than the entities check (concepts genuinely
+# need 2+ sources to promote).
+if sources >= 5 and concepts == 0:
+    print(f"SUSPICIOUS: {sources} source pages but 0 concept pages.")
+    print("  Either the sources have no thematic overlap, or the agent has not")
+    print("  yet revisited earlier sources to promote concepts that now have 2+ sources.")
+PY
+```
+
+For each flagged smell: open the source pages and inspect their `## Entities & concepts` sections. Where deferred mentions describe real entities with multiple captureable facts, recommend creating entity pages. **Not a safe auto-fix** — surface the candidates with their source-context for the user to confirm before creating pages.
+
 ## Output
 
 Produce a markdown report with sections per check. For each issue: severity (high / medium / low), affected pages (wikilinks), suggested action, and whether you can auto-fix.
@@ -578,7 +610,7 @@ Append to `log.md`:
 
 ```
 ## [YYYY-MM-DD] lint | <one-line summary>
-- checks_run: 12
+- checks_run: 13
 - issues_found: <breakdown by severity>
 - auto_fixed: <count>
 - pending_user_review: <count>
