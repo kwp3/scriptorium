@@ -164,10 +164,11 @@ Before writing any pages, produce an entity & concept inventory in the chat. Thi
 ```
 === Entity & concept inventory: [source title] ===
 
-Persons:        [names or "(none)"]
-Orgs:           [names or "(none)"]
-Products/tools: [names or "(none)"]
-Places:         [names or "(none)"]
+Persons:  [names or "(none)"]
+Orgs:     [names or "(none)"]
+Products: [names or "(none)"]
+Places:   [names or "(none)"]
+Other:    [names or "(none)"]
 
 → Entity pages to create: [list with entity_kind in parens, e.g. "BART (product)"]
 → Entity pages to update: [list or "(none)"]
@@ -181,7 +182,7 @@ Concept candidates:
 ```
 
 Rules:
-- A named thing goes in the entity list if it has ≥2 capturable facts (what it does, who made it, a key finding about it). A single name-drop with no attached facts stays off the list.
+- A named thing goes in the entity list if it has two or more capturable facts (what it does, who made it, a key finding about it). A single name-drop with no attached facts stays off the list. When in doubt, list it — thinly populated entity pages are cheap.
 - Every item in the entity list gets a page — no source-count threshold applies to entities.
 - Concept candidates are held to the 2-source threshold, independent of the entity list.
 - If unsure whether something is an entity or a concept: does it have a proper name and a persistent real-world existence? If yes, it's an entity.
